@@ -1,0 +1,30 @@
+# Jupyter / IPython
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Environment
+.env
+.env.*
+*.pem
+*.key
+
+# Data files — store in S3, not the repo
+*.csv
+*.parquet
+*.json.gz
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# SageMaker Studio auto-generated
+.sagemaker-code-config

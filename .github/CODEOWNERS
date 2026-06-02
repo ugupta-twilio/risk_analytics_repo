@@ -1,0 +1,3 @@
+# RA leads are auto-assigned as reviewers on all PRs
+# Replace with actual GitHub usernames of RA leads
+* @twilio/risk-analytics
