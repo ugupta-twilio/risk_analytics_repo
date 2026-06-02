@@ -10,7 +10,7 @@ if [[ -z "$GITHUB_USER" ]]; then
   exit 1
 fi
 
-REPO_URL="git@github.com:twilio/risk-analytics.git"
+REPO_URL="git@github.com:ugupta-twilio/risk_analytics_repo.git"
 REPO_DIR="$HOME/risk-analytics"
 KEY_PATH="$HOME/.ssh/id_ed25519_github"
 BRANCH="auto/${GITHUB_USER}"

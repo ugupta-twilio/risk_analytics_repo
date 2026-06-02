@@ -5,7 +5,7 @@ is automatically committed and pushed to GitHub. No manual git commands needed.
 
 ## Prerequisites
 
-- GitHub account in the `twilio` org, added to `@twilio/risk-analytics` team
+- GitHub account added as a collaborator to `ugupta-twilio/risk_analytics_repo`
 
 ---
 
@@ -14,7 +14,7 @@ is automatically committed and pushed to GitHub. No manual git commands needed.
 Open a terminal in SageMaker Studio (File → New → Terminal):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/twilio/risk-analytics/main/sagemaker/setup.sh \
+curl -fsSL https://raw.githubusercontent.com/ugupta-twilio/risk_analytics_repo/main/sagemaker/setup.sh \
   | bash -s <your-github-username>
 ```
 
