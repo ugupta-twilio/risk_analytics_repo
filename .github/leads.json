@@ -1,4 +1,5 @@
 {
   "projects/GM/*": "ugupta-twilio",
-  "projects/test/*": "ugupta-twilio"
+  "projects/test/*": "ugupta-twilio",
+  "projects/test/ugupta-twilio": "ugupta-twilio"
 }
