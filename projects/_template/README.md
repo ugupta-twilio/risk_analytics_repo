@@ -22,8 +22,11 @@
 
 ---
 
-## Access note
+## Folder rules
 
-This folder is owned by the analyst whose GitHub username matches the folder name.
-Only that analyst (and the ticket lead) can merge changes here.
-See the [repo README](../../../README.md) for the full access control policy.
+- This folder must be named after your **exact GitHub username** (case-sensitive)
+- Only you and your ticket lead can merge changes into this folder
+- Do not create subfolders for other analysts — each analyst creates their own folder via a self-service PR
+- Do not store raw data files here — use S3 and reference the path in your notebooks
+
+See [Folder Structure Rules](../../../README.md#folder-structure-rules) in the repo README for the full policy on who can create what folders.

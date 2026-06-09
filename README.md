@@ -55,6 +55,63 @@ To start working on a ticket (e.g. RISK-3016):
 
 ---
 
+## Folder Structure Rules
+
+The repo uses a strict 4-level hierarchy under `projects/`. Each level has a defined owner, naming convention, and creation process.
+
+### Level overview
+
+```
+projects/
+└── <area>/                        # Level 1 — Business area (e.g. GM)
+    └── <TICKET-ID>/               # Level 2 — Work ticket (e.g. RISK-3016)
+        └── <github-username>/     # Level 3 — Analyst personal folder
+            └── <your files>       # Level 4 — Notebooks, scripts, data refs
+```
+
+### Who can create what
+
+| Folder level | Example | Who creates it | How |
+|---|---|---|---|
+| `projects/<area>/` | `projects/GM/` | **Repo admin only** (`@ugupta-twilio`) | Open a PR directly; no analyst can create new area folders |
+| `projects/<area>/<TICKET-ID>/` | `projects/GM/RISK-3016/` | **Ticket lead** | Open a PR on branch `setup/ticket-RISK-XXXX`; update `.github/leads.json` to register yourself as lead |
+| `projects/<area>/<TICKET-ID>/<username>/` | `projects/GM/RISK-3016/kbhat27s/` | **Analyst (self-service)** | Open a PR on branch `setup/<username>-joins-<TICKET>`; CI validates the folder name matches your GitHub username |
+| `shared/utils/<subfolder>/` | `shared/utils/fraud/` | **Repo admin or ticket lead** | Open a PR; changes here affect all analysts |
+| `.github/` files | `leads.json`, `CODEOWNERS` | **Repo admin only** | CI blocks non-admin PRs touching `.github/` |
+
+### Naming conventions
+
+| Folder level | Rule | Examples |
+|---|---|---|
+| Area | Short uppercase abbreviation | `GM`, `FRAUD`, `CREDIT` |
+| Ticket ID | `WORD-NNNN` uppercase, matching the JIRA ticket | `RISK-3016`, `RISK-3017` |
+| Username | **Exact GitHub username** — case-sensitive | `kbhat27s`, `klalwani01` |
+| Files/notebooks | Lowercase with hyphens or underscores | `model_v2.ipynb`, `feature-engineering.py` |
+
+### Step-by-step: creating a new ticket folder (ticket lead)
+
+1. Create a branch: `setup/ticket-RISK-XXXX`
+2. Create the folder `projects/<area>/RISK-XXXX/` with a `README.md` (describe the ticket goal)
+3. Add an entry to `.github/leads.json`:
+   ```json
+   "projects/<area>/RISK-XXXX": "<your-github-username>"
+   ```
+4. Open a PR — repo admin reviews and merges
+5. Announce the ticket to analysts so they can self-provision their personal folders
+
+### Step-by-step: joining a ticket as an analyst
+
+1. Create a branch: `setup/<your-username>-joins-RISK-XXXX`
+2. Create your folder: `projects/<area>/RISK-XXXX/<your-github-username>/` with:
+   - `README.md` (copy from `projects/_template/README.md`)
+   - `__init__.py` (empty)
+3. Open a PR — `path-check` CI auto-validates the folder name matches your GitHub username
+4. Ticket lead reviews and merges; CODEOWNERS is auto-updated on merge
+
+> **Rule:** You may only create a folder whose name is your exact GitHub username. Creating a folder under someone else's username will be blocked by CI.
+
+---
+
 ## Access Control
 
 This repo enforces **folder-level access** via GitHub Actions CI and CODEOWNERS:
