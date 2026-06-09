@@ -6,25 +6,41 @@ Code repository for the Twilio Risk Analytics (RA) team.
 
 ---
 
+## Table of Contents
+
+1. [Repository Structure](#repository-structure)
+2. [Getting Started](#getting-started)
+3. [Folder Structure Rules](#folder-structure-rules)
+4. [SageMaker Studio Auto-Sync](#sagemaker-studio-auto-sync)
+5. [Access Control](#access-control)
+6. [Contributing](#contributing)
+7. [Team](#team)
+
+---
+
 ## Repository Structure
 
 ```
 risk-analytics/
 ├── projects/
-│   ├── _template/          # Copy this when starting a new project
-│   └── <area>/
-│       └── <TICKET-ID>/    # One folder per ticket (e.g. RISK-3016)
-│           └── <username>/ # Your personal work folder — named after your GitHub username
+│   ├── _template/              # Copy this when starting a new project
+│   └── <area>/                 # Business area (e.g. GM, FRAUD, CREDIT)
+│       └── <TICKET-ID>/        # One folder per ticket (e.g. RISK-3016)
+│           └── <username>/     # Your personal work folder (named after your GitHub username)
+│               ├── README.md       # Required — describe your project
+│               ├── __init__.py     # Required — empty file
+│               ├── .sync-branch    # Required — target branch for SageMaker auto-sync
+│               └── <your files>    # Notebooks, scripts, etc.
 ├── shared/
-│   └── utils/              # Shared helper code reused across projects
-├── sagemaker/              # SageMaker Studio auto-sync setup
-│   ├── setup.sh            # Run this once in SageMaker Studio to enable auto-sync
-│   └── README.md           # Step-by-step guide
+│   └── utils/                  # Shared helper code reused across projects
+├── sagemaker/
+│   ├── setup.sh                # Run once in SageMaker Studio to enable auto-sync
+│   └── README.md               # Full SageMaker setup guide
 ├── scripts/
-│   └── update_codeowners.py # Auto-regenerates CODEOWNERS from folder structure
+│   └── update_codeowners.py    # Auto-regenerates CODEOWNERS from folder structure
 └── .github/
-    ├── CODEOWNERS          # Auto-assigns reviewers per folder
-    ├── leads.json          # Maps ticket folders to their leads
+    ├── CODEOWNERS              # Auto-assigns reviewers per folder
+    ├── leads.json              # Optional: maps ticket folders to their leads
     └── workflows/
         ├── path-check.yml          # CI: blocks PRs that touch unauthorized folders
         └── update-codeowners.yml   # CI: auto-updates CODEOWNERS on merge
@@ -34,32 +50,53 @@ risk-analytics/
 
 ## Getting Started
 
-### 1. Accept your collaborator invitation
+### Step 1 — Accept your collaborator invitation
 
-Check your email or go to [github.com/ugupta-twilio/risk_analytics_repo/invitations](https://github.com/ugupta-twilio/risk_analytics_repo/invitations) and accept the Write access invite.
+Check your email or visit [github.com/ugupta-twilio/risk_analytics_repo/invitations](https://github.com/ugupta-twilio/risk_analytics_repo/invitations) and accept the Write access invite.
 
-### 2. Set up SageMaker Studio auto-sync (one time)
+### Step 2 — Set up SageMaker Studio auto-sync (one time per Studio profile)
 
-See [sagemaker/README.md](sagemaker/README.md). After setup, every notebook save inside `~/risk-analytics/` is automatically committed and pushed to your personal branch — no manual git needed.
+Run this in your SageMaker Studio terminal:
 
-### 3. Join a ticket
+```bash
+curl -fsSL https://raw.githubusercontent.com/ugupta-twilio/risk_analytics_repo/main/sagemaker/setup.sh \
+  | bash -s <your-github-username>
+```
 
-To start working on a ticket (e.g. RISK-3016):
+This sets up SSH authentication to GitHub and installs a post-save hook. After a Studio space restart, every notebook save inside your ticket folder is automatically committed and pushed to your feature branch — no manual git needed.
 
-1. Create a branch: `setup/<your-username>-joins-RISK-3016`
-2. Add your folder: `projects/GM/RISK-3016/<your-github-username>/` containing:
-   - `README.md` (copy from `projects/_template/README.md`)
-   - `__init__.py` (empty)
+See [sagemaker/README.md](sagemaker/README.md) for the full step-by-step guide.
+
+### Step 3 — Join a ticket
+
+1. Create a branch: `setup/<your-username>-joins-RISK-XXXX`
+2. Create your analyst folder: `projects/<area>/RISK-XXXX/<your-github-username>/` with these three files:
+
+   | File | Contents |
+   |---|---|
+   | `README.md` | Copy from `projects/_template/README.md` and fill in your project details |
+   | `__init__.py` | Empty file |
+   | `.sync-branch` | One line: the feature branch name, e.g. `feature/RISK-XXXX` |
+
+   ```bash
+   # Example — run from inside ~/risk-analytics/
+   mkdir -p projects/GM/RISK-3016/<your-github-username>
+   cp projects/_template/README.md projects/GM/RISK-3016/<your-github-username>/README.md
+   touch projects/GM/RISK-3016/<your-github-username>/__init__.py
+   echo "feature/RISK-3016" > projects/GM/RISK-3016/<your-github-username>/.sync-branch
+   ```
+
 3. Open a PR — CI validates the folder name matches your GitHub username automatically
-4. The ticket lead reviews and merges
+4. The ticket lead (or repo admin) reviews and merges
+5. After merge: restart your Studio space, then every save auto-pushes to `feature/RISK-3016`
+
+> **Important:** Your folder name must exactly match your GitHub username (case-sensitive).
 
 ---
 
 ## Folder Structure Rules
 
-The repo uses a strict 4-level hierarchy under `projects/`. Each level has a defined owner, naming convention, and creation process.
-
-### Level overview
+### Hierarchy
 
 ```
 projects/
@@ -73,76 +110,81 @@ projects/
 
 | Folder level | Example | Who creates it | How |
 |---|---|---|---|
-| `projects/<area>/` | `projects/GM/` | **Repo admin only** (`@ugupta-twilio`) | Open a PR directly; no analyst can create new area folders |
-| `projects/<area>/<TICKET-ID>/` | `projects/GM/RISK-3016/` | **Ticket lead** | Open a PR on branch `setup/ticket-RISK-XXXX`; update `.github/leads.json` to register yourself as lead |
-| `projects/<area>/<TICKET-ID>/<username>/` | `projects/GM/RISK-3016/kbhat27s/` | **Analyst (self-service)** | Open a PR on branch `setup/<username>-joins-<TICKET>`; CI validates the folder name matches your GitHub username |
+| `projects/<area>/` | `projects/GM/` | **Repo admin only** (`@ugupta-twilio`) | Open a PR directly; analysts cannot create new area folders |
+| `projects/<area>/<TICKET-ID>/` | `projects/GM/RISK-3016/` | **Ticket lead** | Open a PR on branch `setup/ticket-RISK-XXXX`; optionally register as lead in `.github/leads.json` |
+| `projects/<area>/<TICKET-ID>/<username>/` | `projects/GM/RISK-3016/kbhat27s/` | **Analyst (self-service)** | Open a PR on branch `setup/<username>-joins-<TICKET>`; CI validates folder name = GitHub username |
 | `shared/utils/<subfolder>/` | `shared/utils/fraud/` | **Repo admin or ticket lead** | Open a PR; changes here affect all analysts |
 | `.github/` files | `leads.json`, `CODEOWNERS` | **Repo admin only** | CI blocks non-admin PRs touching `.github/` |
 
 ### Naming conventions
 
-| Folder level | Rule | Examples |
+| Level | Rule | Valid examples |
 |---|---|---|
 | Area | Short uppercase abbreviation | `GM`, `FRAUD`, `CREDIT` |
-| Ticket ID | `WORD-NNNN` uppercase, matching the JIRA ticket | `RISK-3016`, `RISK-3017` |
-| Username | **Exact GitHub username** — case-sensitive | `kbhat27s`, `klalwani01` |
-| Files/notebooks | Lowercase with hyphens or underscores | `model_v2.ipynb`, `feature-engineering.py` |
+| Ticket ID | `WORD-NNNN` uppercase, matching your JIRA ticket | `RISK-3016`, `RISK-3017` |
+| Username folder | **Exact GitHub username** — case-sensitive, no substitutions | `kbhat27s`, `klalwani01` |
+| Files / notebooks | Lowercase with hyphens or underscores | `model_v2.ipynb`, `feature-engineering.py` |
 
-### Step-by-step: creating a new ticket folder (ticket lead)
+### Creating a new ticket folder (ticket lead)
 
 1. Create a branch: `setup/ticket-RISK-XXXX`
-2. Create the folder `projects/<area>/RISK-XXXX/` with a `README.md` (describe the ticket goal)
-3. Add an entry to `.github/leads.json`:
+2. Create `projects/<area>/RISK-XXXX/` with a `README.md` describing the ticket goal
+3. *(Optional but recommended)* Register yourself as lead in `.github/leads.json`:
    ```json
    "projects/<area>/RISK-XXXX": "<your-github-username>"
    ```
+   **Why:** When registered, CODEOWNERS auto-assigns you as required reviewer on every PR touching this ticket, and CI allows you to write ticket-level shared files. Without this, there is no designated reviewer — acceptable for small tickets, but worth adding for longer-running work.
 4. Open a PR — repo admin reviews and merges
-5. Announce the ticket to analysts so they can self-provision their personal folders
+5. Announce the ticket so analysts can self-provision their folders
 
-### Step-by-step: joining a ticket as an analyst
+---
 
-1. Create a branch: `setup/<your-username>-joins-RISK-XXXX`
-2. Create your folder: `projects/<area>/RISK-XXXX/<your-github-username>/` with:
-   - `README.md` (copy from `projects/_template/README.md`)
-   - `__init__.py` (empty)
-   - `.sync-branch` — one line containing your target branch name, e.g. `feature/RISK-XXXX`
-     ```bash
-     echo "feature/RISK-XXXX" > projects/<area>/RISK-XXXX/<your-github-username>/.sync-branch
-     ```
-3. Open a PR — `path-check` CI auto-validates the folder name matches your GitHub username
-4. Ticket lead reviews and merges; CODEOWNERS is auto-updated on merge
-5. In SageMaker Studio, after setup: every save inside your folder auto-pushes to `feature/RISK-XXXX`
+## SageMaker Studio Auto-Sync
 
-> **Rule:** You may only create a folder whose name is your exact GitHub username. Creating a folder under someone else's username will be blocked by CI.
+Auto-sync means every notebook save in SageMaker Studio automatically commits and pushes to your feature branch on GitHub. No manual `git add`, `git commit`, or `git push` needed.
+
+**How it works:**
+
+1. Each analyst folder contains a `.sync-branch` file with one line — the target branch name (e.g. `feature/RISK-3016`)
+2. On every save, the post-save hook walks up the folder tree to find the nearest `.sync-branch` file
+3. It checks out that branch (creating it from `main` if it doesn't exist yet), commits the file, and pushes
+4. If no `.sync-branch` is found, the save is skipped silently
+
+**To enable auto-sync for your folder:**
+
+```bash
+echo "feature/RISK-3016" > ~/risk-analytics/projects/GM/RISK-3016/<your-username>/.sync-branch
+```
+
+For the full setup guide including SSH key setup, troubleshooting, and how to open a PR to `main`, see [sagemaker/README.md](sagemaker/README.md).
 
 ---
 
 ## Access Control
 
-This repo enforces **folder-level access** via GitHub Actions CI and CODEOWNERS:
+This repo enforces folder-level access via GitHub Actions CI and CODEOWNERS.
 
 | Who | Can write to |
 |---|---|
-| Ticket lead | Entire `projects/<area>/<ticket>/` folder |
+| Ticket lead (if registered in `leads.json`) | Entire `projects/<area>/<ticket>/` folder |
 | Analyst | Only their own `projects/<area>/<ticket>/<username>/` folder |
-| Repo admin (`@ugupta-twilio`) | `.github/` config files |
+| Repo admin (`@ugupta-twilio`) | `.github/` config files and `shared/utils/` |
 
-**How it works:**
+**Enforcement mechanism:**
 
-- Every PR runs the `path-check` CI workflow. If your PR touches files outside your allowed folder, the check fails and merge is blocked.
-- CODEOWNERS auto-assigns the ticket lead and you as required reviewers on any PR touching your folder.
-- When a new analyst folder is detected on `main`, the `update-codeowners` workflow opens a follow-up PR to keep CODEOWNERS current.
-
-> **Important:** Your folder name must exactly match your GitHub username. E.g. if your GitHub username is `kbhat27s`, your folder must be `projects/GM/RISK-3016/kbhat27s/`.
+- Every PR triggers the `path-check` CI workflow. If your PR touches files outside your allowed folder, CI fails and merge is blocked.
+- CODEOWNERS auto-assigns the ticket lead (if registered) and you as required reviewers on PRs touching your folder.
+- When a new analyst folder lands on `main`, the `update-codeowners` workflow auto-opens a PR to keep CODEOWNERS current.
 
 ---
 
 ## Contributing
 
-- All changes to `main` require a PR with at least 1 approval
-- PRs may only touch files inside your own `<username>/` folder (or ticket-level files if you are the lead)
-- Do not commit data files, credentials, or `.env` files — store data in S3
-- Run your code before merging — no broken notebooks on `main`
+- All changes to `main` require a PR with at least **1 approval**
+- PRs may only touch files inside your own `<username>/` folder, or ticket-level files if you are the registered lead
+- Do **not** commit raw data files or credentials — store data in S3 and reference the path
+- Do **not** commit `.env` files — see `.gitignore` for the full exclusion list
+- Run your code end-to-end before merging — no broken notebooks on `main`
 
 ---
 

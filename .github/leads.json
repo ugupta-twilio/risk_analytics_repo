@@ -1,5 +1,3 @@
 {
-  "projects/GM/*": "ugupta-twilio",
-  "projects/test/*": "ugupta-twilio",
-  "projects/test/ugupta-twilio": "ugupta-twilio"
+  "projects/GM/RISK-3016": "ugupta-twilio"
 }
