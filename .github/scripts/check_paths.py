@@ -42,6 +42,7 @@ def _new_folder_owner(changed: list) -> Optional[str]:
 
 
 PROVISIONING_ALLOWED_FILES = {"README.md", "__init__.py"}
+NON_ADMIN_GITHUB_ALLOWED_PREFIXES = (".github/scripts/", ".github/workflows/path-check.yml")
 
 
 def is_provisioning_pr(changed: list) -> bool:
@@ -76,11 +77,16 @@ def classify_files(
         )
 
     blocked = []
-    for f in changed:
+    for raw_file in changed:
+        f = raw_file.rstrip("\\").strip()
+        if not f:
+            continue
         if _analyst_folder_for(f, actor):
             continue
         if f.startswith(".github/"):
-            if actor in admins:
+            if actor in admins or any(
+                f.startswith(prefix) for prefix in NON_ADMIN_GITHUB_ALLOWED_PREFIXES
+            ):
                 continue
             blocked.append(f)
             continue

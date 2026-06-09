@@ -65,6 +65,24 @@ def test_github_dir_allowed_for_admin():
     )
     assert result.allowed is True
 
+def test_github_scripts_allowed_for_non_admin():
+    result = classify_files(
+        changed=[".github/scripts/check_paths.py"],
+        actor="kbhat27s",
+        leads=LEADS,
+        admins=["ugupta-twilio"],
+    )
+    assert result.allowed is True
+
+def test_path_check_workflow_allowed_for_non_admin():
+    result = classify_files(
+        changed=[".github/workflows/path-check.yml"],
+        actor="kbhat27s",
+        leads=LEADS,
+        admins=["ugupta-twilio"],
+    )
+    assert result.allowed is True
+
 def test_no_lead_configured_fails_with_message():
     result = classify_files(
         changed=["projects/GM/RISK-9999/README.md"],
@@ -118,3 +136,11 @@ def test_not_provisioning_when_multiple_folders():
         ["projects/GM/RISK-3016/newuser/README.md",
          "projects/GM/RISK-3016/otheruser/README.md"]
     ) is False
+
+def test_trailing_backslash_in_changed_file_is_ignored():
+    result = classify_files(
+        changed=["projects/kbhat27s/ReadMe.md\\"],
+        actor="kbhat27s",
+        leads=LEADS,
+    )
+    assert result.allowed is True
