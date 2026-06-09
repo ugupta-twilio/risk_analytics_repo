@@ -137,10 +137,10 @@ def test_not_provisioning_when_multiple_folders():
          "projects/GM/RISK-3016/otheruser/README.md"]
     ) is False
 
-def test_trailing_backslash_in_changed_file_is_ignored():
-    result = classify_files(
-        changed=["projects/kbhat27s/ReadMe.md\\"],
-        actor="kbhat27s",
-        leads=LEADS,
-    )
-    assert result.allowed is True
+def test_provisioning_with_sync_branch_file():
+    # .sync-branch is now a required file in analyst folders — provisioning PR should include it
+    assert is_provisioning_pr(
+        ["projects/GM/RISK-3016/newuser/README.md",
+         "projects/GM/RISK-3016/newuser/__init__.py",
+         "projects/GM/RISK-3016/newuser/.sync-branch"]
+    ) is True

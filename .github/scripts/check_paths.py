@@ -41,8 +41,7 @@ def _new_folder_owner(changed: list) -> Optional[str]:
     return owners.pop() if len(owners) == 1 else None
 
 
-PROVISIONING_ALLOWED_FILES = {"README.md", "__init__.py"}
-NON_ADMIN_GITHUB_ALLOWED_PREFIXES = (".github/scripts/", ".github/workflows/path-check.yml")
+PROVISIONING_ALLOWED_FILES = {"README.md", "__init__.py", ".sync-branch"}
 
 
 def is_provisioning_pr(changed: list) -> bool:
