@@ -74,7 +74,7 @@ projects/
 | Folder level | Example | Who creates it | How |
 |---|---|---|---|
 | `projects/<area>/` | `projects/GM/` | **Repo admin only** (`@ugupta-twilio`) | Open a PR directly; no analyst can create new area folders |
-| `projects/<area>/<TICKET-ID>/` | `projects/GM/RISK-3016/` | **Ticket lead** | Open a PR on branch `setup/ticket-RISK-XXXX`; update `.github/leads.json` to register yourself as lead |
+| `projects/<area>/<TICKET-ID>/` | `projects/GM/RISK-3016/` | **Ticket lead** | Open a PR on branch `setup/ticket-RISK-XXXX`; optionally add yourself to `.github/leads.json` as lead (see below) |
 | `projects/<area>/<TICKET-ID>/<username>/` | `projects/GM/RISK-3016/kbhat27s/` | **Analyst (self-service)** | Open a PR on branch `setup/<username>-joins-<TICKET>`; CI validates the folder name matches your GitHub username |
 | `shared/utils/<subfolder>/` | `shared/utils/fraud/` | **Repo admin or ticket lead** | Open a PR; changes here affect all analysts |
 | `.github/` files | `leads.json`, `CODEOWNERS` | **Repo admin only** | CI blocks non-admin PRs touching `.github/` |
@@ -92,10 +92,11 @@ projects/
 
 1. Create a branch: `setup/ticket-RISK-XXXX`
 2. Create the folder `projects/<area>/RISK-XXXX/` with a `README.md` (describe the ticket goal)
-3. Add an entry to `.github/leads.json`:
+3. *(Optional but recommended)* Add yourself to `.github/leads.json` as the ticket lead:
    ```json
    "projects/<area>/RISK-XXXX": "<your-github-username>"
    ```
+   **Why:** When registered as lead, CODEOWNERS auto-assigns you as a required reviewer on every PR touching this ticket folder, and the `path-check` CI lets you write to ticket-level files (e.g. a shared README). Without this, anyone can push to the ticket folder without a designated reviewer — fine for small teams, but worth adding for larger or longer-running tickets.
 4. Open a PR — repo admin reviews and merges
 5. Announce the ticket to analysts so they can self-provision their personal folders
 
