@@ -14,6 +14,24 @@ def test_own_folder_allowed():
     assert result.allowed is True
     assert result.blocked_files == []
 
+def test_own_folder_allowed_2level():
+    # projects/<username>/file — e.g. projects/skuanar/ReadMe.md
+    result = classify_files(
+        changed=["projects/skuanar/ReadMe.md"],
+        actor="skuanar",
+        leads=LEADS,
+    )
+    assert result.allowed is True
+
+def test_own_folder_allowed_3level():
+    # projects/<area>/<username>/file — e.g. projects/test/ugupta-twilio/test.py
+    result = classify_files(
+        changed=["projects/test/ugupta-twilio/test.py"],
+        actor="ugupta-twilio",
+        leads=LEADS,
+    )
+    assert result.allowed is True
+
 def test_other_analyst_folder_blocked():
     result = classify_files(
         changed=["projects/GM/RISK-3016/klalwani01/notebook.ipynb"],
@@ -57,14 +75,16 @@ def test_github_dir_allowed_for_admin():
     )
     assert result.allowed is True
 
-def test_no_lead_configured_fails_with_message():
+def test_ticket_root_blocked_when_no_lead_configured():
+    # No lead in leads.json — ticket-level file is blocked as unauthorized, no special error
     result = classify_files(
         changed=["projects/GM/RISK-9999/README.md"],
         actor="kbhat27s",
         leads={},
     )
     assert result.allowed is False
-    assert "No lead configured" in result.error_message
+    assert "projects/GM/RISK-9999/README.md" in result.blocked_files
+    assert "No lead configured" not in result.error_message
 
 def test_self_provisioning_pr_allowed():
     result = classify_files(
