@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# One-time setup: SSH key, repo clone, personal auto-sync branch,
-# and JupyterLab post-save hook for automatic git push on every notebook save.
+# One-time setup: SSH key, repo clone, and JupyterLab post-save hook for
+# automatic git push to a ticket feature branch on every notebook save.
 # Run once per SageMaker Studio user profile. All state persists on EFS.
 set -euo pipefail
 
