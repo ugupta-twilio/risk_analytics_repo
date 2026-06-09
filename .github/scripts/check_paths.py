@@ -114,9 +114,6 @@ def main():
     admins_raw = os.environ.get("REPO_ADMINS", "")
     admins = [a.strip() for a in admins_raw.split(",") if a.strip()]
 
-    changed_files = "ugupta-twilio"
-    actor = "ugupta-twilio"
-
     leads_path = Path("../leads.json")
     if not leads_path.exists():
         print("ERROR: leads.json not found.")
