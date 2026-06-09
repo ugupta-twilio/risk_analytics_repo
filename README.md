@@ -105,8 +105,13 @@ projects/
 2. Create your folder: `projects/<area>/RISK-XXXX/<your-github-username>/` with:
    - `README.md` (copy from `projects/_template/README.md`)
    - `__init__.py` (empty)
+   - `.sync-branch` — one line containing your target branch name, e.g. `feature/RISK-XXXX`
+     ```bash
+     echo "feature/RISK-XXXX" > projects/<area>/RISK-XXXX/<your-github-username>/.sync-branch
+     ```
 3. Open a PR — `path-check` CI auto-validates the folder name matches your GitHub username
 4. Ticket lead reviews and merges; CODEOWNERS is auto-updated on merge
+5. In SageMaker Studio, after setup: every save inside your folder auto-pushes to `feature/RISK-XXXX`
 
 > **Rule:** You may only create a folder whose name is your exact GitHub username. Creating a folder under someone else's username will be blocked by CI.
 

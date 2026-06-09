@@ -33,19 +33,44 @@ so the post-save hook takes effect.
 
 ## How auto-sync works
 
-- Every time you save a notebook inside `~/risk-analytics/`, the hook runs:
-  `git add <file>` → `git commit -m "auto: save <filename>"` → `git push`
-- Changes push to your personal branch `auto/<your-username>`, not `main`
-- To share your work with the team, open a PR from your `auto/<username>` branch to `main`
-- The PR must only touch files inside your own `projects/**/<username>/` folder — CI will block it otherwise
+Auto-sync is driven by a `.sync-branch` file you place in your analyst folder. The hook reads this file on every save to know which branch to push to.
+
+- Every time you save a file inside `~/risk-analytics/`, the hook:
+  1. Walks up the folder tree to find the nearest `.sync-branch` file
+  2. Reads the target branch name from it (e.g. `feature/RISK-3016`)
+  3. If the branch doesn't exist on GitHub yet — creates it from `main` automatically
+  4. Runs: `git add <file>` → `git commit -m "auto: save <filename>"` → `git push`
 - Files saved outside `~/risk-analytics/` are not synced
+- Files inside `~/risk-analytics/` with no `.sync-branch` in their folder tree are skipped silently
+- Errors are logged to `~/.jupyter/sync-errors.log` and never block your save
+
+---
+
+## Setting up auto-sync for a ticket
+
+After running `setup.sh` and restarting your Studio space:
+
+1. Create your analyst folder if it doesn't exist:
+   ```
+   projects/GM/RISK-3016/<your-github-username>/
+   ```
+2. Create a `.sync-branch` file inside it with your target branch name:
+   ```bash
+   echo "feature/RISK-3016" > ~/risk-analytics/projects/GM/RISK-3016/<your-github-username>/.sync-branch
+   ```
+3. That's it — every save inside that folder now auto-pushes to `feature/RISK-3016`
+
+To switch to a different branch (e.g. for a new ticket), update the `.sync-branch` file:
+```bash
+echo "feature/RISK-3017" > ~/risk-analytics/projects/GM/RISK-3017/<your-github-username>/.sync-branch
+```
 
 ---
 
 ## Opening a PR to main
 
 1. Go to [github.com/ugupta-twilio/risk_analytics_repo](https://github.com/ugupta-twilio/risk_analytics_repo)
-2. Click **"Compare & pull request"** on your `auto/<username>` branch
+2. Click **"Compare & pull request"** on your `feature/<TICKET-ID>` branch
 3. Fill in the PR template and submit
 4. The ticket lead and you are auto-assigned as reviewers via CODEOWNERS
 
@@ -61,3 +86,6 @@ so the post-save hook takes effect.
 | Hook installed but nothing pushes | Check `~/.jupyter/jupyter_server_config.py` contains the `risk_analytics_auto_sync` block |
 | PR blocked by `path-check` CI | Your PR touches files outside your `<username>/` folder — check the CI error message |
 | Folder name mismatch error | Your folder name must exactly match your GitHub username |
+| Auto-sync not pushing | Check `.sync-branch` file exists and contains a valid branch name |
+| Wrong branch being pushed to | Update the `.sync-branch` file with the correct branch name and save again |
+| Branch creation failed | Check `~/.jupyter/sync-errors.log` for the error; verify GitHub SSH auth with `ssh -T git@github.com` |
