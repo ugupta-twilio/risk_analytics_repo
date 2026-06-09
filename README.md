@@ -2,29 +2,90 @@
 
 Code repository for the Twilio Risk Analytics (RA) team.
 
-## Adding a New Project
+**GitHub repo:** [ugupta-twilio/risk_analytics_repo](https://github.com/ugupta-twilio/risk_analytics_repo)
 
-1. Copy `projects/_template/` to `projects/<your-project-name>/`
-2. Update the copied `README.md` with what your project does and how to run it
-3. Open a PR — RA leads are auto-assigned as reviewers
+---
 
-## SageMaker Studio Setup
+## Repository Structure
 
-If you work in SageMaker Studio, see [sagemaker/README.md](sagemaker/README.md) for one-time setup instructions to connect your Studio environment to this repo.
+```
+risk-analytics/
+├── projects/
+│   ├── _template/          # Copy this when starting a new project
+│   └── <area>/
+│       └── <TICKET-ID>/    # One folder per ticket (e.g. RISK-3016)
+│           └── <username>/ # Your personal work folder — named after your GitHub username
+├── shared/
+│   └── utils/              # Shared helper code reused across projects
+├── sagemaker/              # SageMaker Studio auto-sync setup
+│   ├── setup.sh            # Run this once in SageMaker Studio to enable auto-sync
+│   └── README.md           # Step-by-step guide
+├── scripts/
+│   └── update_codeowners.py # Auto-regenerates CODEOWNERS from folder structure
+└── .github/
+    ├── CODEOWNERS          # Auto-assigns reviewers per folder
+    ├── leads.json          # Maps ticket folders to their leads
+    └── workflows/
+        ├── path-check.yml          # CI: blocks PRs that touch unauthorized folders
+        └── update-codeowners.yml   # CI: auto-updates CODEOWNERS on merge
+```
 
-## Shared Utilities
+---
 
-Reusable helper code lives in `shared/utils/`. Import from there rather than copying code across projects.
+## Getting Started
 
-## Team
+### 1. Accept your collaborator invitation
 
-| Role | Contact |
+Check your email or go to [github.com/ugupta-twilio/risk_analytics_repo/invitations](https://github.com/ugupta-twilio/risk_analytics_repo/invitations) and accept the Write access invite.
+
+### 2. Set up SageMaker Studio auto-sync (one time)
+
+See [sagemaker/README.md](sagemaker/README.md). After setup, every notebook save inside `~/risk-analytics/` is automatically committed and pushed to your personal branch — no manual git needed.
+
+### 3. Join a ticket
+
+To start working on a ticket (e.g. RISK-3016):
+
+1. Create a branch: `setup/<your-username>-joins-RISK-3016`
+2. Add your folder: `projects/GM/RISK-3016/<your-github-username>/` containing:
+   - `README.md` (copy from `projects/_template/README.md`)
+   - `__init__.py` (empty)
+3. Open a PR — CI validates the folder name matches your GitHub username automatically
+4. The ticket lead reviews and merges
+
+---
+
+## Access Control
+
+This repo enforces **folder-level access** via GitHub Actions CI and CODEOWNERS:
+
+| Who | Can write to |
 |---|---|
-| RA Lead | *<add name>* |
-| Repo admin | *<add name>* |
+| Ticket lead | Entire `projects/<area>/<ticket>/` folder |
+| Analyst | Only their own `projects/<area>/<ticket>/<username>/` folder |
+| Repo admin (`@ugupta-twilio`) | `.github/` config files |
+
+**How it works:**
+
+- Every PR runs the `path-check` CI workflow. If your PR touches files outside your allowed folder, the check fails and merge is blocked.
+- CODEOWNERS auto-assigns the ticket lead and you as required reviewers on any PR touching your folder.
+- When a new analyst folder is detected on `main`, the `update-codeowners` workflow opens a follow-up PR to keep CODEOWNERS current.
+
+> **Important:** Your folder name must exactly match your GitHub username. E.g. if your GitHub username is `kbhat27s`, your folder must be `projects/GM/RISK-3016/kbhat27s/`.
+
+---
 
 ## Contributing
 
-- All changes to `main` require a PR with at least 1 RA team member approval
-- Do not commit data files, credentials, or `.env` files (see `.gitignore`)
+- All changes to `main` require a PR with at least 1 approval
+- PRs may only touch files inside your own `<username>/` folder (or ticket-level files if you are the lead)
+- Do not commit data files, credentials, or `.env` files — store data in S3
 - Run your code before merging — no broken notebooks on `main`
+
+---
+
+## Team
+
+| Role | GitHub |
+|---|---|
+| Repo admin / RA Lead | [@ugupta-twilio](https://github.com/ugupta-twilio) |
