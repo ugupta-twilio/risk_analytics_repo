@@ -110,3 +110,11 @@ def test_not_provisioning_when_multiple_folders():
         ["projects/GM/RISK-3016/newuser/README.md",
          "projects/GM/RISK-3016/otheruser/README.md"]
     ) is False
+
+def test_provisioning_with_sync_branch_file():
+    # .sync-branch is now a required file in analyst folders — provisioning PR should include it
+    assert is_provisioning_pr(
+        ["projects/GM/RISK-3016/newuser/README.md",
+         "projects/GM/RISK-3016/newuser/__init__.py",
+         "projects/GM/RISK-3016/newuser/.sync-branch"]
+    ) is True
