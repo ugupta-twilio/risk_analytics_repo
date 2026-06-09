@@ -38,7 +38,7 @@ def _new_folder_owner(changed: list) -> Optional[str]:
     return owners.pop() if len(owners) == 1 else None
 
 
-PROVISIONING_ALLOWED_FILES = {"README.md", "__init__.py"}
+PROVISIONING_ALLOWED_FILES = {"README.md", "__init__.py", ".sync-branch"}
 
 
 def is_provisioning_pr(changed: list) -> bool:
@@ -115,10 +115,7 @@ def main():
     admins = [a.strip() for a in admins_raw.split(",") if a.strip()]
 
     leads_path = Path(".github/leads.json")
-    if not leads_path.exists():
-        print("ERROR: .github/leads.json not found.")
-        sys.exit(1)
-    leads = json.loads(leads_path.read_text())
+    leads = json.loads(leads_path.read_text()) if leads_path.exists() else {}
 
     if not changed_files or not actor:
         print("ERROR: CHANGED_FILES and GITHUB_ACTOR must be set.")
