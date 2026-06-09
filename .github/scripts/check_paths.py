@@ -106,6 +106,7 @@ def classify_files(
 
 
 def main():
+    print(f"check_paths.py v2 — actor={os.environ.get('GITHUB_ACTOR','?')}")
     changed_files = os.environ.get("CHANGED_FILES", "").splitlines()
     actor = os.environ.get("GITHUB_ACTOR", "")
     admins_raw = os.environ.get("REPO_ADMINS", "")
