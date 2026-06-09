@@ -23,6 +23,14 @@ def test_other_analyst_folder_blocked():
     assert result.allowed is False
     assert "projects/GM/RISK-3016/klalwani01/notebook.ipynb" in result.blocked_files
 
+def test_top_level_actor_folder_allowed():
+    result = classify_files(
+        changed=["projects/kbhat27s/ReadMe.md"],
+        actor="kbhat27s",
+        leads=LEADS,
+    )
+    assert result.allowed is True
+
 def test_ticket_root_allowed_for_lead():
     result = classify_files(
         changed=["projects/GM/RISK-3016/README.md"],

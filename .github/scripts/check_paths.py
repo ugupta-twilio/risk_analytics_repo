@@ -15,15 +15,18 @@ class CheckResult:
 
 
 def _analyst_folder_for(path: str, actor: str) -> bool:
-    """True if path is inside projects/**/<actor>/"""
+    """True if path is inside projects/**/<actor>/."""
     parts = Path(path).parts
-    return len(parts) >= 4 and parts[0] == "projects" and parts[3] == actor
+    return (
+        (len(parts) >= 3 and parts[0] == "projects" and parts[1] == actor)
+        or (len(parts) >= 4 and parts[0] == "projects" and parts[3] == actor)
+    )
 
 
 def _ticket_prefix(path: str) -> Optional[str]:
     """Return 'projects/<area>/<ticket>' for a path, or None."""
     parts = Path(path).parts
-    if len(parts) >= 3 and parts[0] == "projects":
+    if len(parts) >= 4 and parts[0] == "projects":
         return str(Path(*parts[:3]))
     return None
 
