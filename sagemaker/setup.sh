@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# One-time setup: SSH key, repo clone, personal auto-sync branch,
-# and JupyterLab post-save hook for automatic git push on every notebook save.
+# One-time setup: SSH key, repo clone, and JupyterLab post-save hook for
+# automatic git push to a ticket feature branch on every notebook save.
 # Run once per SageMaker Studio user profile. All state persists on EFS.
 set -euo pipefail
 
@@ -13,7 +13,6 @@ fi
 REPO_URL="git@github.com:ugupta-twilio/risk_analytics_repo.git"
 REPO_DIR="$HOME/risk-analytics"
 KEY_PATH="$HOME/.ssh/id_ed25519_github"
-BRANCH="auto/${GITHUB_USER}"
 
 # ── 1. SSH key ──────────────────────────────────────────────────────────────
 echo "==> Setting up SSH key..."
@@ -65,18 +64,7 @@ else
   echo "    Repo already cloned at $REPO_DIR — skipping."
 fi
 
-# ── 4. Create personal auto-sync branch ────────────────────────────────────
-echo "==> Setting up personal branch: $BRANCH"
-cd "$REPO_DIR"
-if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null 2>&1; then
-  git checkout "$BRANCH"
-  git pull origin "$BRANCH"
-else
-  git checkout -b "$BRANCH"
-  git push -u origin "$BRANCH"
-fi
-
-# ── 5. Install JupyterLab post-save hook ───────────────────────────────────
+# ── 4. Install JupyterLab post-save hook (ticket-branch mode) ──────────────
 echo "==> Installing JupyterLab post-save hook..."
 mkdir -p "$HOME/.jupyter"
 JUPYTER_CONFIG="$HOME/.jupyter/jupyter_server_config.py"
@@ -85,27 +73,64 @@ JUPYTER_CONFIG="$HOME/.jupyter/jupyter_server_config.py"
 if ! grep -q "risk_analytics_auto_sync" "$JUPYTER_CONFIG" 2>/dev/null; then
   cat >> "$JUPYTER_CONFIG" <<'PYEOF'
 
-# risk_analytics_auto_sync — auto-commit and push on every notebook save
+# risk_analytics_auto_sync — auto-commit and push on every save (ticket-branch mode)
 import subprocess, os
+
+_LOG = os.path.expanduser("~/.jupyter/sync-errors.log")
+
+def _find_sync_branch(os_path):
+    """Walk up from os_path to find the nearest .sync-branch file inside ~/risk-analytics."""
+    repo_dir = os.path.expanduser("~/risk-analytics")
+    path = os.path.dirname(os.path.abspath(os_path))
+    while path.startswith(repo_dir) and path != repo_dir:
+        candidate = os.path.join(path, ".sync-branch")
+        if os.path.isfile(candidate):
+            branch = open(candidate).read().strip()
+            return branch if branch else None
+        path = os.path.dirname(path)
+    return None
+
+def _ensure_branch(repo_dir, branch):
+    """Create branch from main if it doesn't exist remotely, then check it out."""
+    result = subprocess.run(
+        ["git", "ls-remote", "--exit-code", "--heads", "origin", branch],
+        cwd=repo_dir, capture_output=True
+    )
+    if result.returncode != 0:
+        # Branch doesn't exist — create from main
+        subprocess.run(["git", "fetch", "origin", "main"], cwd=repo_dir, check=True, capture_output=True)
+        subprocess.run(["git", "checkout", "-b", branch, "origin/main"], cwd=repo_dir, check=True, capture_output=True)
+        subprocess.run(["git", "push", "-u", "origin", branch], cwd=repo_dir, check=True, capture_output=True)
+    else:
+        # Branch exists — check it out if not already on it
+        current = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=repo_dir, capture_output=True, text=True
+        ).stdout.strip()
+        if current != branch:
+            subprocess.run(["git", "checkout", branch], cwd=repo_dir, check=True, capture_output=True)
+            subprocess.run(["git", "pull", "origin", branch], cwd=repo_dir, check=True, capture_output=True)
 
 def _auto_sync_on_save(os_path, model, **kwargs):
     repo_dir = os.path.expanduser("~/risk-analytics")
     if not os_path.startswith(repo_dir + os.sep):
-        return  # only sync files inside the cloned repo (os.sep prevents prefix false-positives)
+        return
     try:
+        branch = _find_sync_branch(os_path)
+        if not branch:
+            return  # no .sync-branch file found — skip silently
+        _ensure_branch(repo_dir, branch)
         subprocess.run(["git", "add", os_path], cwd=repo_dir, check=True, capture_output=True)
-        result = subprocess.run(
-            ["git", "diff", "--cached", "--quiet"],
-            cwd=repo_dir, capture_output=True
-        )
-        if result.returncode != 0:  # there are staged changes
+        diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo_dir, capture_output=True)
+        if diff.returncode != 0:
             subprocess.run(
                 ["git", "commit", "-m", f"auto: save {os.path.basename(os_path)}"],
                 cwd=repo_dir, check=True, capture_output=True
             )
             subprocess.run(["git", "push"], cwd=repo_dir, check=True, capture_output=True)
-    except Exception:
-        pass  # never block a save due to any git or filesystem error
+    except Exception as e:
+        with open(_LOG, "a") as f:
+            f.write(f"{os_path}: {e}\n")
 
 c.ContentsManager.post_save_hook = _auto_sync_on_save
 PYEOF
@@ -113,11 +138,11 @@ fi
 
 echo ""
 echo "==> Setup complete."
-echo "    Repo:   $REPO_DIR"
-echo "    Branch: $BRANCH"
+echo "    Repo: $REPO_DIR"
 echo ""
-echo "    From now on, every notebook save inside $REPO_DIR"
-echo "    is automatically committed and pushed to GitHub."
-echo ""
-echo "    IMPORTANT: Restart your JupyterLab kernel server for the hook to take effect:"
-echo "    In SageMaker Studio → File → Shut Down → restart your space."
+echo "    To enable auto-sync for a ticket:"
+echo "    1. Create your folder: projects/<area>/<TICKET-ID>/$GITHUB_USER/"
+echo "    2. Add a .sync-branch file with the target branch, e.g.:"
+echo "       echo 'feature/RISK-3016' > projects/GM/RISK-3016/$GITHUB_USER/.sync-branch"
+echo "    3. Restart your Studio space (File → Shut Down → restart)"
+echo "    From then on, every save inside that folder auto-pushes to the branch."

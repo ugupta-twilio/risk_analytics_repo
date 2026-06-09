@@ -29,4 +29,17 @@
 - Do not create subfolders for other analysts — each analyst creates their own folder via a self-service PR
 - Do not store raw data files here — use S3 and reference the path in your notebooks
 
+## Required files in this folder
+
+| File | Purpose |
+|---|---|
+| `README.md` | This file — describe the project and how to run it |
+| `__init__.py` | Empty — marks the folder as a Python package |
+| `.sync-branch` | One line: the target branch for SageMaker auto-sync (e.g. `feature/RISK-3016`) |
+
+Create `.sync-branch` when you join a ticket:
+```bash
+echo "feature/RISK-XXXX" > .sync-branch
+```
+
 See [Folder Structure Rules](../../../README.md#folder-structure-rules) in the repo README for the full policy on who can create what folders.

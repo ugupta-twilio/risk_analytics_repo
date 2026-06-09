@@ -15,9 +15,15 @@ class CheckResult:
 
 
 def _analyst_folder_for(path: str, actor: str) -> bool:
-    """True if path is inside projects/**/<actor>/"""
+    """True if path is inside a projects/ subtree owned by actor.
+    Supports any depth: projects/<actor>/..., projects/<area>/<actor>/...,
+    or projects/<area>/<ticket>/<actor>/...
+    """
     parts = Path(path).parts
-    return len(parts) >= 4 and parts[0] == "projects" and parts[3] == actor
+    if len(parts) < 2 or parts[0] != "projects":
+        return False
+    # Check actor appears at depth 1, 2, or 3 under projects/
+    return actor in parts[1:4]
 
 
 def _ticket_prefix(path: str) -> Optional[str]:
@@ -38,7 +44,7 @@ def _new_folder_owner(changed: list) -> Optional[str]:
     return owners.pop() if len(owners) == 1 else None
 
 
-PROVISIONING_ALLOWED_FILES = {"README.md", "__init__.py"}
+PROVISIONING_ALLOWED_FILES = {"README.md", "__init__.py", ".sync-branch"}
 
 
 def is_provisioning_pr(changed: list) -> bool:
@@ -82,17 +88,8 @@ def classify_files(
             blocked.append(f)
             continue
         prefix = _ticket_prefix(f)
-        if prefix:
-            if prefix not in leads:
-                return CheckResult(
-                    allowed=False,
-                    blocked_files=[f],
-                    error_message=(
-                        f"No lead configured for '{prefix}'. Contact repo admin."
-                    ),
-                )
-            if leads[prefix] == actor:
-                continue
+        if prefix and leads.get(prefix) == actor:
+            continue
         blocked.append(f)
 
     if blocked:
@@ -115,10 +112,7 @@ def main():
     admins = [a.strip() for a in admins_raw.split(",") if a.strip()]
 
     leads_path = Path(".github/leads.json")
-    if not leads_path.exists():
-        print("ERROR: .github/leads.json not found.")
-        sys.exit(1)
-    leads = json.loads(leads_path.read_text())
+    leads = json.loads(leads_path.read_text()) if leads_path.exists() else {}
 
     if not changed_files or not actor:
         print("ERROR: CHANGED_FILES and GITHUB_ACTOR must be set.")
