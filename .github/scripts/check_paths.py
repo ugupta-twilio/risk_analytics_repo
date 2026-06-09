@@ -15,9 +15,15 @@ class CheckResult:
 
 
 def _analyst_folder_for(path: str, actor: str) -> bool:
-    """True if path is inside projects/**/<actor>/"""
+    """True if path is inside a projects/ subtree owned by actor.
+    Supports any depth: projects/<actor>/..., projects/<area>/<actor>/...,
+    or projects/<area>/<ticket>/<actor>/...
+    """
     parts = Path(path).parts
-    return len(parts) >= 4 and parts[0] == "projects" and parts[3] == actor
+    if len(parts) < 2 or parts[0] != "projects":
+        return False
+    # Check actor appears at depth 1, 2, or 3 under projects/
+    return actor in parts[1:4]
 
 
 def _ticket_prefix(path: str) -> Optional[str]:

@@ -14,6 +14,24 @@ def test_own_folder_allowed():
     assert result.allowed is True
     assert result.blocked_files == []
 
+def test_own_folder_allowed_2level():
+    # projects/<username>/file — e.g. projects/skuanar/ReadMe.md
+    result = classify_files(
+        changed=["projects/skuanar/ReadMe.md"],
+        actor="skuanar",
+        leads=LEADS,
+    )
+    assert result.allowed is True
+
+def test_own_folder_allowed_3level():
+    # projects/<area>/<username>/file — e.g. projects/test/ugupta-twilio/test.py
+    result = classify_files(
+        changed=["projects/test/ugupta-twilio/test.py"],
+        actor="ugupta-twilio",
+        leads=LEADS,
+    )
+    assert result.allowed is True
+
 def test_other_analyst_folder_blocked():
     result = classify_files(
         changed=["projects/GM/RISK-3016/klalwani01/notebook.ipynb"],
