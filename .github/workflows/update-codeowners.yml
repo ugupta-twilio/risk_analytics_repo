@@ -1,0 +1,45 @@
+name: Update CODEOWNERS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "projects/**"
+
+jobs:
+  update-codeowners:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Regenerate CODEOWNERS
+        run: python3 scripts/update_codeowners.py
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --quiet .github/CODEOWNERS || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Open PR if CODEOWNERS changed
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH="chore/update-codeowners-$(date +%Y%m%d%H%M%S)"
+          git checkout -b "$BRANCH"
+          git add .github/CODEOWNERS
+          git commit -m "chore: update CODEOWNERS [auto]"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "chore: update CODEOWNERS [auto]" \
+            --body "Automatically regenerated after new analyst folders were detected on main." \
+            --base main \
+            --head "$BRANCH"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
