@@ -114,9 +114,9 @@ def main():
     admins_raw = os.environ.get("REPO_ADMINS", "")
     admins = [a.strip() for a in admins_raw.split(",") if a.strip()]
 
-    leads_path = Path(".github/leads.json")
+    leads_path = Path("../leads.json")
     if not leads_path.exists():
-        print("ERROR: .github/leads.json not found.")
+        print("ERROR: leads.json not found.")
         sys.exit(1)
     leads = json.loads(leads_path.read_text())
 
