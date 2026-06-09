@@ -27,4 +27,5 @@ jobs:
           REPO_ADMINS: "ugupta-twilio"
         run: |
           cd .github/scripts
-          python3 check_paths.py
+          find . -name "*.pyc" -delete
+          python3 -B check_paths.py
