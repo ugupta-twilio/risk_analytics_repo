@@ -1,2 +1,8 @@
-# RA leads are auto-assigned as reviewers on all PRs
-* @ugupta-twilio
+# ── Ticket leads ──────────────────────────────────────────
+# Leads must approve any PR touching their ticket folder
+projects/GM/RISK-3016/    @ugupta-twilio
+
+# ── Analyst folders ───────────────────────────────────────
+# Each analyst must approve PRs touching their own folder
+projects/GM/RISK-3016/kbhat/       @kbhat
+projects/GM/RISK-3016/klalwani01/  @klalwani01
