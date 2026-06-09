@@ -23,7 +23,7 @@ jobs:
       - name: Run path check
         env:
           CHANGED_FILES: ${{ steps.changed.outputs.all_changed_files }}
-          GITHUB_ACTOR: ${{ github.event.pull_request.user.login }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           REPO_ADMINS: "ugupta-twilio"
         run: |
           cd .github/scripts
