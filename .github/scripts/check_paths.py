@@ -82,17 +82,8 @@ def classify_files(
             blocked.append(f)
             continue
         prefix = _ticket_prefix(f)
-        if prefix:
-            if prefix not in leads:
-                return CheckResult(
-                    allowed=False,
-                    blocked_files=[f],
-                    error_message=(
-                        f"No lead configured for '{prefix}'. Contact repo admin."
-                    ),
-                )
-            if leads[prefix] == actor:
-                continue
+        if prefix and leads.get(prefix) == actor:
+            continue
         blocked.append(f)
 
     if blocked:
