@@ -70,7 +70,7 @@ mkdir -p "$HOME/.jupyter"
 JUPYTER_CONFIG="$HOME/.jupyter/jupyter_server_config.py"
 
 # Only add the hook block once
-if ! grep -q "risk_analytics_auto_sync" "$JUPYTER_CONFIG" 2>/dev/null; then
+if ! grep -q "_is_sagemaker_path" "$JUPYTER_CONFIG" 2>/dev/null; then
   cat >> "$JUPYTER_CONFIG" <<'PYEOF'
 
 # risk_analytics_auto_sync — auto-commit and push on every save (ticket-branch mode)
@@ -92,8 +92,7 @@ def _is_sagemaker_path(os_path, repo_dir):
     # parts[-2] == 'sagemaker' ensures the file is directly inside sagemaker/ (not nested).
     # index >= 4 ensures there is at least one username component before sagemaker/.
     return (
-        len(parts) >= 3
-        and parts[0] == "projects"
+        parts[0] == "projects"
         and parts[-2] == "sagemaker"
         and list(parts).index("sagemaker") >= 4
     )
@@ -138,6 +137,7 @@ def _auto_sync_on_save(os_path, model, **kwargs):
     try:
         if _is_sagemaker_path(os_path, repo_dir):
             # Direct-to-main path for .ipynb files in <username>/sagemaker/
+            subprocess.run(["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True)
             subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=repo_dir, check=True, capture_output=True)
             subprocess.run(["git", "add", os_path], cwd=repo_dir, check=True, capture_output=True)
             diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo_dir, capture_output=True)
@@ -161,6 +161,10 @@ def _auto_sync_on_save(os_path, model, **kwargs):
                 )
                 subprocess.run(["git", "push"], cwd=repo_dir, check=True, capture_output=True)
     except Exception as e:
+        try:
+            subprocess.run(["git", "rebase", "--abort"], cwd=repo_dir, capture_output=True)
+        except Exception:
+            pass
         with open(_LOG, "a") as f:
             f.write(f"{os_path}: {e}\n")
 

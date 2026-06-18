@@ -22,8 +22,7 @@ def _is_sagemaker_path(os_path, repo_dir):
     # parts[-2] == 'sagemaker' ensures the file is directly inside sagemaker/ (not nested).
     # index >= 4 ensures there is at least one username component before sagemaker/.
     return (
-        len(parts) >= 3
-        and parts[0] == "projects"
+        parts[0] == "projects"
         and parts[-2] == "sagemaker"
         and list(parts).index("sagemaker") >= 4
     )
@@ -72,6 +71,11 @@ def run_tests():
         (
             "sagemaker at wrong depth (no username folder)",
             "projects/GM/RISK-3016/sagemaker/analysis.ipynb",
+            False,
+        ),
+        (
+            "capital-S Sagemaker/ rejected (case-sensitive)",
+            "projects/GM/RISK-3016/kbhat/Sagemaker/analysis.ipynb",
             False,
         ),
     ]

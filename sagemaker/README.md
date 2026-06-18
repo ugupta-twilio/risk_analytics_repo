@@ -58,6 +58,17 @@ gh api repos/ugupta-twilio/risk_analytics_repo/branches/main/protection/restrict
 
 This is a **one-time step per analyst**.
 
+### Existing users: hook update
+
+If you set up SageMaker auto-sync before June 2026, re-run the setup script to pick up the new routing logic:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ugupta-twilio/risk_analytics_repo/main/sagemaker/setup.sh \
+  | bash -s <your-github-username>
+```
+
+Then restart your Studio space.
+
 ---
 
 ## Prerequisites
