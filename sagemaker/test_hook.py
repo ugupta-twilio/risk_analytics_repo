@@ -20,12 +20,12 @@ def _is_sagemaker_path(os_path, repo_dir):
     # e.g. projects/GM/RISK-3016/kbhat/sagemaker/notebook.ipynb
     #       parts: ('projects','GM','RISK-3016','kbhat','sagemaker','notebook.ipynb')
     # parts[-2] == 'sagemaker' ensures the file is directly inside sagemaker/ (not nested).
-    # index >= 3 ensures there is at least one username component before sagemaker/.
+    # index >= 4 ensures there is at least one username component before sagemaker/.
     return (
         len(parts) >= 3
         and parts[0] == "projects"
         and parts[-2] == "sagemaker"
-        and list(parts).index("sagemaker") >= 3
+        and list(parts).index("sagemaker") >= 4
     )
 
 
@@ -67,6 +67,11 @@ def run_tests():
         (
             "not under projects/",
             "other/stuff/sagemaker/file.ipynb",
+            False,
+        ),
+        (
+            "sagemaker at wrong depth (no username folder)",
+            "projects/GM/RISK-3016/sagemaker/analysis.ipynb",
             False,
         ),
     ]
