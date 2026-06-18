@@ -22,6 +22,44 @@ When set up correctly:
 
 ---
 
+## SageMaker Notebook Auto-Sync to Main
+
+`.ipynb` files saved inside your `<username>/sagemaker/` folder are committed and pushed
+**directly to `main`** on every save — no PR or review required.
+
+### Folder structure
+
+Your notebook must be at this path:
+
+```
+projects/<area>/<ticket>/<username>/sagemaker/<notebook>.ipynb
+```
+
+Example: `projects/GM/RISK-3016/kbhat/sagemaker/analysis.ipynb`
+
+### Rules
+
+- Only `.ipynb` files sync to main. All other file types (`.py`, `.csv`, etc.)
+  saved in the `sagemaker/` folder are silently ignored.
+- The folder must be named exactly `sagemaker` (lowercase).
+- The folder must sit directly inside your `<username>/` folder — not nested deeper.
+- A `.sync-branch` file is **not** needed inside the `sagemaker/` folder.
+
+### Prerequisite: admin bypass
+
+Before your first notebook save can reach `main`, a repo admin must add your GitHub
+account to the `main` branch protection bypass list. Ask your repo admin to run:
+
+```bash
+gh api repos/ugupta-twilio/risk_analytics_repo/branches/main/protection/restrictions/users \
+  --method POST \
+  --field users[]="<your-github-username>"
+```
+
+This is a **one-time step per analyst**.
+
+---
+
 ## Prerequisites
 
 Before running setup, confirm the following:
@@ -230,6 +268,7 @@ When your analysis is ready to share with the team:
 | PR blocked by `path-check` CI | PR touches files outside your `<username>/` folder | Read the CI error message — it lists the exact files causing the failure |
 | Folder name mismatch CI error | GitHub username and folder name don't match exactly | Rename your folder to match your exact GitHub username (case-sensitive) |
 | Hook not installed after running setup | `~/.jupyter/jupyter_server_config.py` missing the hook | Run `grep "risk_analytics_auto_sync" ~/.jupyter/jupyter_server_config.py` — if empty, re-run setup |
+| `sagemaker/` notebook saves not appearing on `main` | Account not on branch bypass list | Ask your repo admin to run the `gh api` bypass command in the [SageMaker Notebook Auto-Sync to Main](#sagemaker-notebook-auto-sync-to-main) section above |
 
 ---
 
