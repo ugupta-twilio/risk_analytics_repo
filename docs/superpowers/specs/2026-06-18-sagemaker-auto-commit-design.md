@@ -69,13 +69,14 @@ def _is_sagemaker_path(os_path, repo_dir):
     rel = os.path.relpath(os_path, repo_dir)
     parts = Path(rel).parts
     # Must be under projects/ and have 'sagemaker' as the immediate parent dir
-    # of the file, at depth >= 4 (projects/<area>/<ticket>/<username>/sagemaker/).
+    # of the file, preceded by a username folder.
     # e.g. projects/GM/RISK-3016/kbhat/sagemaker/notebook.ipynb
     #       parts: ('projects','GM','RISK-3016','kbhat','sagemaker','notebook.ipynb')
     return (
-        parts[0] == "projects"
-        and parts[-2] == "sagemaker"
-        and list(parts).index("sagemaker") >= 4
+        len(parts) >= 3
+        and parts[0] == "projects"
+        and "sagemaker" in parts[:-1]
+        and parts[list(parts).index("sagemaker") - 1] != "projects"
     )
 ```
 
