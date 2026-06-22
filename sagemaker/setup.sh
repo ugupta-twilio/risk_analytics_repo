@@ -180,6 +180,9 @@ def _auto_sync_on_save(os_path, model, **kwargs):
         with open(_LOG, "a") as f:
             f.write(f"{os_path}: {e}\n")
 
+c.AsyncLargeFileManager.post_save_hook = _auto_sync_on_save
+c.AsyncFileContentsManager.post_save_hook = _auto_sync_on_save
+c.AsyncContentsManager.post_save_hook = _auto_sync_on_save
 c.ContentsManager.post_save_hook = _auto_sync_on_save
 PYEOF
 fi
