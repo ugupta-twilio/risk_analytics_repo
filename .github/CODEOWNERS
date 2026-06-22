@@ -4,5 +4,6 @@ projects/GM/RISK-3016/    @ugupta-twilio
 
 # ── Analyst folders ───────────────────────────────────────
 # Each analyst must approve PRs touching their own folder
-projects/GM/RISK-3016/kbhat/       @kbhat
-projects/GM/RISK-3016/klalwani01/  @klalwani01
+projects/GM/RISK-3016/kbhat/            @kbhat
+projects/GM/RISK-3016/klalwani01/       @klalwani01
+projects/test/RISK-3333/ugupta-twilio/  @ugupta-twilio
