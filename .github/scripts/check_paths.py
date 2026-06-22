@@ -80,11 +80,11 @@ def classify_files(
 
     blocked = []
     for f in changed:
+        if actor in admins:
+            continue
         if _analyst_folder_for(f, actor):
             continue
         if f.startswith(".github/"):
-            if actor in admins:
-                continue
             blocked.append(f)
             continue
         prefix = _ticket_prefix(f)

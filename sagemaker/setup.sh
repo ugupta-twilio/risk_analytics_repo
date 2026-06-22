@@ -70,17 +70,48 @@ mkdir -p "$HOME/.jupyter"
 JUPYTER_CONFIG="$HOME/.jupyter/jupyter_server_config.py"
 
 # Only add the hook block once
-if ! grep -q "risk_analytics_auto_sync" "$JUPYTER_CONFIG" 2>/dev/null; then
+if ! grep -q "_is_sagemaker_path" "$JUPYTER_CONFIG" 2>/dev/null; then
   cat >> "$JUPYTER_CONFIG" <<'PYEOF'
 
 # risk_analytics_auto_sync — auto-commit and push on every save (ticket-branch mode)
 import subprocess, os
+from pathlib import Path
+from datetime import datetime, timezone
 
 _LOG = os.path.expanduser("~/.jupyter/sync-errors.log")
 
-def _find_sync_branch(os_path):
-    """Walk up from os_path to find the nearest .sync-branch file inside ~/risk-analytics."""
-    repo_dir = os.path.expanduser("~/risk-analytics")
+def _is_sagemaker_path(os_path, repo_dir):
+    """True if os_path is a .ipynb file inside a …/<username>/sagemaker/ subtree."""
+    if not os_path.endswith(".ipynb"):
+        return False
+    rel = os.path.relpath(os_path, repo_dir)
+    parts = Path(rel).parts
+    # Must be under projects/ and have 'sagemaker' as the immediate parent dir
+    # of the file, preceded by a username folder.
+    # e.g. projects/GM/RISK-3016/kbhat/sagemaker/notebook.ipynb
+    #       parts: ('projects','GM','RISK-3016','kbhat','sagemaker','notebook.ipynb')
+    # parts[-2] == 'sagemaker' ensures the file is directly inside sagemaker/ (not nested).
+    # index >= 4 ensures there is at least one username component before sagemaker/.
+    return (
+        parts[0] == "projects"
+        and parts[-2] == "sagemaker"
+        and list(parts).index("sagemaker") >= 4
+    )
+
+def _find_repo_dir(os_path):
+    """Return the git repo root containing os_path, or None if not inside a git repo."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=os.path.dirname(os.path.abspath(os_path)),
+            capture_output=True, text=True
+        )
+        return result.stdout.strip() if result.returncode == 0 else None
+    except Exception:
+        return None
+
+def _find_sync_branch(os_path, repo_dir):
+    """Walk up from os_path to find the nearest .sync-branch file inside the repo."""
     path = os.path.dirname(os.path.abspath(os_path))
     while path.startswith(repo_dir) and path != repo_dir:
         candidate = os.path.join(path, ".sync-branch")
@@ -112,26 +143,46 @@ def _ensure_branch(repo_dir, branch):
             subprocess.run(["git", "pull", "origin", branch], cwd=repo_dir, check=True, capture_output=True)
 
 def _auto_sync_on_save(os_path, model, **kwargs):
-    repo_dir = os.path.expanduser("~/risk-analytics")
-    if not os_path.startswith(repo_dir + os.sep):
-        return
+    repo_dir = _find_repo_dir(os_path)
+    if not repo_dir:
+        return  # not inside a git repo — skip silently
     try:
-        branch = _find_sync_branch(os_path)
-        if not branch:
-            return  # no .sync-branch file found — skip silently
-        _ensure_branch(repo_dir, branch)
-        subprocess.run(["git", "add", os_path], cwd=repo_dir, check=True, capture_output=True)
-        diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo_dir, capture_output=True)
-        if diff.returncode != 0:
-            subprocess.run(
-                ["git", "commit", "-m", f"auto: save {os.path.basename(os_path)}"],
-                cwd=repo_dir, check=True, capture_output=True
-            )
-            subprocess.run(["git", "push"], cwd=repo_dir, check=True, capture_output=True)
+        if _is_sagemaker_path(os_path, repo_dir):
+            # Direct-to-main path for .ipynb files in <username>/sagemaker/
+            subprocess.run(["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True)
+            subprocess.run(["git", "pull", "--rebase", "--autostash", "origin", "main"], cwd=repo_dir, check=True, capture_output=True)
+            subprocess.run(["git", "add", os_path], cwd=repo_dir, check=True, capture_output=True)
+            diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo_dir, capture_output=True)
+            if diff.returncode != 0:
+                subprocess.run(
+                    ["git", "commit", "-m", f"auto: save {os.path.relpath(os_path, repo_dir)} [{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}]"],
+                    cwd=repo_dir, check=True, capture_output=True
+                )
+                subprocess.run(["git", "push", "origin", "main"], cwd=repo_dir, check=True, capture_output=True)
+        else:
+            branch = _find_sync_branch(os_path, repo_dir)
+            if not branch:
+                return  # no .sync-branch file found — skip silently
+            _ensure_branch(repo_dir, branch)
+            subprocess.run(["git", "add", os_path], cwd=repo_dir, check=True, capture_output=True)
+            diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo_dir, capture_output=True)
+            if diff.returncode != 0:
+                subprocess.run(
+                    ["git", "commit", "-m", f"auto: save {os.path.relpath(os_path, repo_dir)} [{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}]"],
+                    cwd=repo_dir, check=True, capture_output=True
+                )
+                subprocess.run(["git", "push"], cwd=repo_dir, check=True, capture_output=True)
     except Exception as e:
+        try:
+            subprocess.run(["git", "rebase", "--abort"], cwd=repo_dir, capture_output=True)
+        except Exception:
+            pass
         with open(_LOG, "a") as f:
             f.write(f"{os_path}: {e}\n")
 
+c.AsyncLargeFileManager.post_save_hook = _auto_sync_on_save
+c.AsyncFileContentsManager.post_save_hook = _auto_sync_on_save
+c.AsyncContentsManager.post_save_hook = _auto_sync_on_save
 c.ContentsManager.post_save_hook = _auto_sync_on_save
 PYEOF
 fi
