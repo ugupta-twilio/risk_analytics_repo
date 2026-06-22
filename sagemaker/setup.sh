@@ -76,6 +76,7 @@ if ! grep -q "_is_sagemaker_path" "$JUPYTER_CONFIG" 2>/dev/null; then
 # risk_analytics_auto_sync — auto-commit and push on every save (ticket-branch mode)
 import subprocess, os
 from pathlib import Path
+from datetime import datetime, timezone
 
 _LOG = os.path.expanduser("~/.jupyter/sync-errors.log")
 
@@ -154,7 +155,7 @@ def _auto_sync_on_save(os_path, model, **kwargs):
             diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo_dir, capture_output=True)
             if diff.returncode != 0:
                 subprocess.run(
-                    ["git", "commit", "-m", f"auto: save {os.path.basename(os_path)}"],
+                    ["git", "commit", "-m", f"auto: save {os.path.relpath(os_path, repo_dir)} [{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}]"],
                     cwd=repo_dir, check=True, capture_output=True
                 )
                 subprocess.run(["git", "push", "origin", "main"], cwd=repo_dir, check=True, capture_output=True)
@@ -167,7 +168,7 @@ def _auto_sync_on_save(os_path, model, **kwargs):
             diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo_dir, capture_output=True)
             if diff.returncode != 0:
                 subprocess.run(
-                    ["git", "commit", "-m", f"auto: save {os.path.basename(os_path)}"],
+                    ["git", "commit", "-m", f"auto: save {os.path.relpath(os_path, repo_dir)} [{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}]"],
                     cwd=repo_dir, check=True, capture_output=True
                 )
                 subprocess.run(["git", "push"], cwd=repo_dir, check=True, capture_output=True)
