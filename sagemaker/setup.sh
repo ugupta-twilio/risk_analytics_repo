@@ -97,9 +97,20 @@ def _is_sagemaker_path(os_path, repo_dir):
         and list(parts).index("sagemaker") >= 4
     )
 
-def _find_sync_branch(os_path):
-    """Walk up from os_path to find the nearest .sync-branch file inside ~/risk-analytics."""
-    repo_dir = os.path.expanduser("~/risk-analytics")
+def _find_repo_dir(os_path):
+    """Return the git repo root containing os_path, or None if not inside a git repo."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=os.path.dirname(os.path.abspath(os_path)),
+            capture_output=True, text=True
+        )
+        return result.stdout.strip() if result.returncode == 0 else None
+    except Exception:
+        return None
+
+def _find_sync_branch(os_path, repo_dir):
+    """Walk up from os_path to find the nearest .sync-branch file inside the repo."""
     path = os.path.dirname(os.path.abspath(os_path))
     while path.startswith(repo_dir) and path != repo_dir:
         candidate = os.path.join(path, ".sync-branch")
@@ -131,9 +142,9 @@ def _ensure_branch(repo_dir, branch):
             subprocess.run(["git", "pull", "origin", branch], cwd=repo_dir, check=True, capture_output=True)
 
 def _auto_sync_on_save(os_path, model, **kwargs):
-    repo_dir = os.path.expanduser("~/risk-analytics")
-    if not os_path.startswith(repo_dir + os.sep):
-        return
+    repo_dir = _find_repo_dir(os_path)
+    if not repo_dir:
+        return  # not inside a git repo — skip silently
     try:
         if _is_sagemaker_path(os_path, repo_dir):
             # Direct-to-main path for .ipynb files in <username>/sagemaker/
@@ -148,7 +159,7 @@ def _auto_sync_on_save(os_path, model, **kwargs):
                 )
                 subprocess.run(["git", "push", "origin", "main"], cwd=repo_dir, check=True, capture_output=True)
         else:
-            branch = _find_sync_branch(os_path)
+            branch = _find_sync_branch(os_path, repo_dir)
             if not branch:
                 return  # no .sync-branch file found — skip silently
             _ensure_branch(repo_dir, branch)
