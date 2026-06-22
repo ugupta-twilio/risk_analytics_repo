@@ -149,7 +149,7 @@ def _auto_sync_on_save(os_path, model, **kwargs):
         if _is_sagemaker_path(os_path, repo_dir):
             # Direct-to-main path for .ipynb files in <username>/sagemaker/
             subprocess.run(["git", "checkout", "main"], cwd=repo_dir, check=True, capture_output=True)
-            subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=repo_dir, check=True, capture_output=True)
+            subprocess.run(["git", "pull", "--rebase", "--autostash", "origin", "main"], cwd=repo_dir, check=True, capture_output=True)
             subprocess.run(["git", "add", os_path], cwd=repo_dir, check=True, capture_output=True)
             diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo_dir, capture_output=True)
             if diff.returncode != 0:
